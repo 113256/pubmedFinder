@@ -1,0 +1,7 @@
+Below is a bunch of medical extracts related to {keyword}, use concise language to write a summary and highlight the key points. Give the answer in the following format:
+1. Introduction
+2. Details
+3. Conclusion
+
+Article is as follows:
+{data}

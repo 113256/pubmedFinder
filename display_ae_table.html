@@ -1,0 +1,134 @@
+<!-- display_ae_table.html -->
+<!DOCTYPE html>
+<html>
+<head>
+	<link href = "css/bootstrap.min.css" rel = "stylesheet">
+		<style>
+		/* Add custom CSS styles */
+
+		
+		#aeTableContainer {
+			max-height: 700px; /* Set the maximum height here (adjust as needed) */
+			overflow-y: auto; /* Enable vertical scrolling */
+		}
+		
+		/* Fix table header while scrolling */
+		.fixed-table-header {
+			position: sticky;
+			top: 0;
+			background-color: #0e0e79; /* Change background color to blue */
+			z-index: 1;
+			color: white; /* Change font color to white */
+		}
+		/* Style for the highlight color */
+		.highlight {
+			background-color: yellow;
+			color: black;
+		}
+		
+		/* Style for the highlight color */
+		.highlightRed {
+			background-color: #eec272;
+			color: black;
+		}
+		
+    </style>
+    <title>AE Table</title>
+	
+</head>
+<body>
+<div style="padding-left:20px;padding-right:20px">
+    
+	<nav class="navbar navbar-light "  style="background-color: #e3f2fd;">
+  <div class="container-fluid">
+    <h1 id="title"></h1>
+  </div>
+</nav>
+    <table class="table table-bordered"  id="aeTable">
+        <!-- Table header with Medicine and Effects columns -->
+        <thead class="fixed-table-header">
+            <tr>
+                <th>Medicine</th>
+                <th>Effects</th>
+            </tr>
+        </thead>
+        <!-- Table body to display filtered contents of the "AE" table -->
+        <tbody>
+        </tbody>
+    </table>
+	
+	<h2>Source Text</h2>
+     <p class="form-control" id="sourceText" rows="10">
+	 </p>
+	
+</div>
+    <script>
+        const title = document.getElementById('title');
+        const aeTable = document.getElementById('aeTable');
+
+        // Fetch the fileName from the URL query parameters
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const fileName = urlParams.get('fileName');
+
+        // Set the title to display the fileName
+        title.textContent += fileName;
+
+		// Fetch and display the content of uploads/fileName.txt in the sourceText textarea
+		fetch(`/read-file?fileName=${encodeURIComponent(fileName.replace(".pdf",".txt"))}`)
+			.then(response => response.text())
+			.then(text => {
+				console.log("AAA"+text);sourceText.innerHTML  = text;
+			})
+			.catch(error => console.error('Error fetching file content:', error));	
+
+
+        // Fetch and populate the AE table with data filtered by the fileName
+        fetch(`/fetch-data?fileName=${encodeURIComponent(fileName)}`)
+            .then(response => response.json())
+            .then(data => {
+				console.log(data);
+                const tableBody = aeTable.querySelector('tbody');
+                tableBody.innerHTML = '';
+				
+                data.aeData.forEach(row => {
+                    const newRow = tableBody.insertRow();
+                    const medicineCell = newRow.insertCell();
+                    const effectsCell = newRow.insertCell();
+
+                    medicineCell.textContent = row.Medicine;
+                    effectsCell.textContent = row.Effects;
+
+                });
+				
+				// Highlight matching text (evidence) in the sourceText
+				console.log("S");
+				var effects = data.evidenceData.map(row => row.evidence);
+				effects = Array.from(new Set(effects)); // get unique with Set class!
+				var effectsRegex = new RegExp(effects.join('|'), 'gi');
+				console.log(effectsRegex);
+				console.log(sourceText.innerHTML);
+				sourceText.innerHTML  = sourceText.innerHTML.replace(effectsRegex, function(match) {
+					console.log("AAAA" + match);
+					return '<mark class="highlight">' + match + '</mark>';
+				});
+				
+									
+				// Highlight matching text (effects) in the sourceText
+				effects = data.aeData.map(row => row.Effects);
+				effectsRegex = new RegExp(effects.join('|'), 'gi');
+				console.log(effectsRegex);
+				sourceText.innerHTML  = sourceText.innerHTML.replace(effectsRegex, function(match) {
+					return '<mark class="highlightRed">' + match + '</mark>';
+				});
+
+				
+            })
+            .catch(error => console.error('Error fetching data:', error));
+			
+			
+		
+			
+    </script>
+</body>
+</html>
